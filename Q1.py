@@ -8,7 +8,7 @@
 #Ensure error handling for file I/O operations, socket connections, and pickling/unpickling.
 ##############################################################################################################
 
-
+# below is the code for the following files: client.py, server.py.
 ##############################################################################################################
 
 # server.py 
