@@ -8,7 +8,7 @@
 #Ensure error handling for file I/O operations, socket connections, and pickling/unpickling.
 ##############################################################################################################
 
-
+# fault tolerance was insured by handling connection, file, pickling/unpickling, and all the remaining exceptions. 
 
 # below is the code for the following files: client.py, server.py.
 ##############################################################################################################
