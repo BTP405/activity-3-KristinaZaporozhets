@@ -20,7 +20,12 @@
 #   functions are used as a function attribute of Task instance) and client.py (to create tasks).
 # - The server.py module was imported into server1.py and server2.py in order to avoid repetitive code.
 
-# fault tolerance was insured by handling connection, timeouts, 
+# fault tolerance was insured by handling connection, timeouts, pickling/unpickling, and all the remaining exceptions. 
+
+# scalability was insured by dynamic addition/removal of worker nodes, using iteration over the returned 
+# value of zip function, which was called with tasksQueue and workersQueue arguments. 
+
+# Note: there are some hard-coded values such as task1, task2, and port values for workers.
 
 # below is the code for the following files: task.py, client.py, server.py, server1.py, and server2.py.
 ##############################################################################################################
