@@ -178,10 +178,6 @@ if __name__ == "__main__":
 
     for i in range(workingNodes.maxWorkerNum):
         worker_process.join()
-
-
-
-
 ##############################################################################################################
 
 # workingNodes.py
