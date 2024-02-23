@@ -10,6 +10,28 @@
 #Allow clients to join and leave the chat room dynamically while maintaining active connections with other clients.
 #Use pickling to serialize and deserialize messages exchanged between clients and the server.
 
+# --- Server: 
+# server.py implements a class ChatServer, that has the instructor and 3 methods. 
+# Instructor initializes attributes (client, lock, server_socket). 
+# The start method listens for incoming requests, accepts them and starts a separate thread for each client. 
+# The handle_client method runs as a thread, it adds a client to client list and receives/unpickles
+# incoming data from client, afterwards it creates a separate thread for broadcasting the data.
+# Additionally, the handle_client method manages client's disconnection from server. 
+# The broadcast method acts as a thread, it sends data to all connected clients except the one 
+# that sent the data. 
+# To note, threads have access to currently connected client list only when they acquire lock. 
+
+# --- Client: 
+# client.py connects to server and creates 2 threads for sending and receiving messages.
+# The send_message method acts as a thread, it pickles and sends data to server. Additionally, it manages client's 
+# disconnection from server. 
+# The receive_messages method acts as a thread, it receives data from server, unpickles it and prints it. 
+
+# --- Exception handling: 
+# fault tolerance was insured by handling connection, timeouts, pickling/unpickling, and all the remaining exceptions. 
+
+# --- Note: 
+# to include multiple clients to chat, import client module to seperately created client1.py, client2.py, ...
 ###########################################################################################
 
 # server.py
