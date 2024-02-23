@@ -11,13 +11,7 @@
 ##############################################################################################################
 
 # --- Task distribution: 
-# It is worth mentioning that client can not create an infinite number of tasks and expect their handling by working nodes.
-# For this reason, workingNodes module was created holding maximum number of workers allowed and a list of ports. 
-# client.py creates tasks using Task module, hodling Task class, which keeps track of the number of created instances of the class.
-# client.py then puts tasks to task Queue and checks if the number of created tasks exceeds allowed number of working nodes, if does not
-# it passes taskQueue and workerQueue to runClient function. 
-# On the other hand, server.py creates as much runWorker processes (working nodes) as allowed by workingNodes module. 
-# Each working module handles a task. 
+# client.py sends tasks to server.py, while server.py creates seperate process for each task received from client. 
 
 # --- Serialization: 
 # the serialization and deserialization protocol includes the pickle.dumps() and pickle.loads() 
@@ -29,20 +23,19 @@
 # I have created task.py module: 
 #   The task.py module was imported into server.py module (for cases, when user-defined 
 #   functions are used as a function attribute of Task instance) and client.py (to create tasks).
-# I have created workingNodes.py module: 
-#    The workingNodes.py was imported into server.py (to create working nodes) module and client.py (to check if number of created
-#    tasks exceeds number of allowed working nodes) module.  
 
 # --- Exception handling: 
 # fault tolerance was insured by handling connection, timeouts, pickling/unpickling, and all the remaining exceptions. 
 
 # --- Hard-coded values: 
-# Note: there are some hard-coded values such as task1, task2, and port values and maximum number of workers in workingNodes module. 
+# Note: there are some hard-coded values such as task1, task2. 
 
-# below is the code for the following files: task.py, client.py, server.py, workingNodes: 
+# below is the code for the following files: task.py, client.py, server.py    
 ##############################################################################################################
 
 # task.py: 
+
+# definition of the task class: a task has a function and its arguments 
 
 # definition of the task class: a task has a function and its arguments 
 
@@ -66,31 +59,23 @@ def myFunc(nums):
 
 import socket
 import pickle
-import multiprocessing
 import task
-import workingNodes
 
-def runClient(tasks, workers):    
-    # the zip function creates tuples pairing corresponding 
-    # elements from two or more iterables.
-    while not tasks.empty() and not workers.empty():
+def runClient(tasks, worker):    
         try: 
-            task = tasks.get()
-            worker = workers.get()
-
             client_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             client_socket.settimeout(5)
             client_socket.connect(worker)
 
-            # pickle task   
-            pickledTask = pickle.dumps(task)
-            client_socket.sendall(pickledTask)
+            for task in tasks: 
+                pickledTask = pickle.dumps(task)
+                client_socket.sendall(pickledTask)
 
-            data = client_socket.recv(1024)
-            print('Received acknowledgment:', data.decode())
+                data = client_socket.recv(1024)
+                print('Received acknowledgment:', data.decode())
 
         except socket.timeout as te:
-            print("Connection timed out:", te)
+              print("Connection timed out:", te)
         except socket.error as se: 
             print("Socket error: ", se)
         except Exception as e: 
@@ -106,22 +91,15 @@ if __name__ == "__main__":
     for i in range(10): 
         nums.append(i)
 
-    taskQueue = multiprocessing.Queue()
     # create a task with built-in function and list of arguments 
     task1 = task.Task(sum, nums)
-    taskQueue.put(task1)
     # create a task with user-defined function and list of arguments 
     task2 = task.Task(task.myFunc, [1,2,3])
-    taskQueue.put(task2)
+    taskQueue = [task1, task2] 
 
-    if task.Task.numInstances <= workingNodes.maxWorkerNum: 
 
-        workerQueue = multiprocessing.Queue()
-        for i in range(task.Task.numInstances): 
-            workerQueue.put(('localhost', workingNodes.ports[i]))
-
-        runClient(taskQueue, workerQueue)
-    else: print("There is a limit of working nodes, which is: ", workingNodes.maxWorkerNum)
+    worker = ('localhost', 1026)
+    runClient(taskQueue, worker)
 ##############################################################################################################
 
 # server.py
@@ -129,21 +107,25 @@ if __name__ == "__main__":
 import socket
 import pickle
 import multiprocessing
-import workingNodes
 
-def doTask(Pickledtask):
+# unpickle task and send result to client 
+def worker(Pickledtask, client_socket):
     try: 
         unPickeledtask = pickle.loads(Pickledtask)
         result = unPickeledtask.function(unPickeledtask.args)
-        return result
+
+        message = 'Result: ' + str(result)
+        client_socket.sendall(message.encode())
     except pickle.UnpicklingError as pe:
         print("Error unpickling task:", pe)
         return None
     except Exception as e:
         print("Error executing task:", e)
         return None
+    finally:
+        client_socket.close()
     
-def runWorker(port):
+def runServer(port):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server_address = ('localhost', port) 
 
@@ -155,35 +137,27 @@ def runWorker(port):
         client_socket, client_address = server_socket.accept(); 
         try: 
             print('Connected to', client_address)
-            # max amount of bytes 
-            data = client_socket.recv(1024)
-
-            res = doTask(data)
-
-            message = 'Result: ' + str(res)
-            client_socket.sendall(message.encode())
+            # max amount of bytes
+            # process each task
+            while True: 
+                data = client_socket.recv(1024)
+                if not data: 
+                    break
+                worker_process = multiprocessing.Process(target=worker, args=(data, client_socket))
+                worker_process.start()
+                
+            worker_process.join()
 
         except socket.error as se:
             print("Socket error:", se)
         except Exception as e:
             print("Error occurred:", e)        
-        finally:
-            client_socket.close()       
+
 
 if __name__ == "__main__": 
+    runServer(1026)
 
-    for p in workingNodes.ports: 
-        worker_process = multiprocessing.Process(target=runWorker, args=(p,))
-        worker_process.start()
-
-    for i in range(workingNodes.maxWorkerNum):
-        worker_process.join()
 ##############################################################################################################
-
-# workingNodes.py
-
-maxWorkerNum = 5; 
-ports = [1025, 1026, 1027, 1028, 1029]
 
 
 
