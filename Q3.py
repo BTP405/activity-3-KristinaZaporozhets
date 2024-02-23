@@ -9,6 +9,7 @@
 #Ensure proper synchronization to handle concurrent access to shared resources (e.g., the list of connected clients).
 #Allow clients to join and leave the chat room dynamically while maintaining active connections with other clients.
 #Use pickling to serialize and deserialize messages exchanged between clients and the server.
+###########################################################################################
 
 # --- Server: 
 # server.py implements a class ChatServer, that has the instructor and 3 methods. 
