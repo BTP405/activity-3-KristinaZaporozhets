@@ -37,8 +37,6 @@
 
 # definition of the task class: a task has a function and its arguments 
 
-# definition of the task class: a task has a function and its arguments 
-
 class Task:
     numInstances = 0
     def __init__(self, function, args): 
@@ -122,8 +120,7 @@ def worker(Pickledtask, client_socket):
     except Exception as e:
         print("Error executing task:", e)
         return None
-    finally:
-        client_socket.close()
+
     
 def runServer(port):
     server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -143,20 +140,18 @@ def runServer(port):
                 data = client_socket.recv(1024)
                 if not data: 
                     break
-                worker_process = multiprocessing.Process(target=worker, args=(data, client_socket))
-                worker_process.start()
+                worker(data, client_socket)
                 
-            worker_process.join()
-
         except socket.error as se:
             print("Socket error:", se)
         except Exception as e:
-            print("Error occurred:", e)        
+            print("Error occurred:", e)   
+        finally:
+            client_socket.close()        
 
 
 if __name__ == "__main__": 
     runServer(1026)
-
 ##############################################################################################################
 
 
