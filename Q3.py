@@ -29,7 +29,7 @@
 # The receive_messages method acts as a thread, it receives data from server, unpickles it and prints it. 
 
 # --- Exception handling: 
-# fault tolerance was insured by handling connection, timeouts, pickling/unpickling, and all the remaining exceptions. 
+# fault tolerance was insured by handling connection, pickling/unpickling, and all the remaining exceptions. 
 
 # --- Note: 
 # to include multiple clients to chat, import client module to seperately created client1.py, client2.py, ...
